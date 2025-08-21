@@ -40,31 +40,32 @@ if st.button("Submit Order") and ingredients_list:
     """
 
     try:
-        cnx.execute(insert_sql)
+        cnx.query(insert_sql)  # ✅ FIX: use query() instead of execute()
         st.success(f"✅ Your Smoothie is ordered, {name_on_order}!")
     except Exception as e:
         st.error(f"Failed to insert order: {e}")
 
     # --- For each fruit, fetch nutrition info ---
     for fruit_chosen in ingredients_list:
+        fruit_api_name = fruit_chosen.lower().replace(" ", "").replace("-", "")
+
         try:
-            st.subheader(f"{fruit_chosen} Nutrition Information")
-
-            # Fruityvice API
             fruityvice_response = requests.get(
-                f"https://fruityvice.com/api/fruit/{fruit_chosen.lower()}", timeout=10
+                f"https://fruityvice.com/api/fruit/{fruit_api_name}", timeout=10
             )
-            fruityvice_response.raise_for_status()
-            fruityvice_data = fruityvice_response.json()
 
-            # Normalize JSON to table form
-            if "nutritions" in fruityvice_data:
-                # Expand nutrition into rows
-                nutrition = fruityvice_data["nutritions"]
-                rows = [{"name": fruit_chosen, **nutrition}]
-                st.dataframe(rows, use_container_width=True)
+            if fruityvice_response.status_code == 200:
+                fruityvice_data = fruityvice_response.json()
+
+                if "nutritions" in fruityvice_data:
+                    st.subheader(f"{fruit_chosen} Nutrition Information")
+                    nutrition = fruityvice_data["nutritions"]
+                    rows = [{"name": fruit_chosen, **nutrition}]
+                    st.dataframe(rows, use_container_width=True)
+                else:
+                    st.warning(f"⚠️ No nutrition data available for {fruit_chosen}")
             else:
-                st.warning(f"No nutrition data available for {fruit_chosen}")
+                st.info(f"ℹ️ {fruit_chosen} is not available in Fruityvice database.")
 
         except Exception as e:
             st.warning(f"Could not fetch info for {fruit_chosen}: {e}")
