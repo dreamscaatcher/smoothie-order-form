@@ -1,17 +1,17 @@
 # Streamlit for web app interface
-streamlit==1.26.0
+streamlit==1.39.0
 
 # Snowflake Snowpark for Python
-snowflake-snowpark-python[pandas]==2.16.0
+snowflake-snowpark-python[pandas]==1.37.0
 
 # Pandas for data manipulation (used by Snowpark)
-pandas==2.1.0
+pandas==2.2.3
 
 # Optional: Needed by Streamlit for rich text formatting
-rich==14.1.0
-markdown-it-py==4.0.0
+rich==13.9.4
+markdown-it-py==3.0.0
 mdurl==0.1.2
 pygments==2.19.2
 
 # Optional: Requests library for API calls if needed
-requests==2.31.0
+requests==2.32.3
