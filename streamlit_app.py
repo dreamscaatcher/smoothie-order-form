@@ -1,25 +1,25 @@
 import streamlit as st
 import requests
 
-st.title(":cup_with_straw: Customize Your Smoothie :cup_with_straw:")
+st.title("🥤 Customize Your Smoothie 🥤")
 st.write("Choose the fruits you want in your custom Smoothie!")
 
+# --- Smoothie name ---
 name_on_order = st.text_input("Name on Smoothie")
 st.write("The name on your smoothie will be:", name_on_order)
 
-# Streamlit Snowflake connection
+# --- Snowflake connection ---
 cnx = st.connection("snowflake")
 
-# --- Fetch fruit options (DataFrame -> list) ---
+# --- Fetch fruit options from Snowflake ---
 try:
     fruits_df = cnx.query("SELECT fruit_name FROM smoothies.public.fruit_options")
-    # Robustly take the first (and only) column, regardless of case
     fruits = fruits_df.iloc[:, 0].dropna().astype(str).tolist()
 except Exception as e:
     st.error(f"Error fetching fruit options: {e}")
     fruits = []
 
-# --- Let user choose up to 5 ---
+# --- User picks ingredients ---
 ingredients_list = st.multiselect(
     "Choose up to 5 ingredients:",
     fruits,
@@ -28,10 +28,9 @@ ingredients_list = st.multiselect(
 
 # --- Submit order ---
 if st.button("Submit Order") and ingredients_list:
-    # Build a nice ingredients string
     ingredients_string = ", ".join(ingredients_list)
 
-    # VERY simple escaping of single quotes for SQL string literals
+    # Escape quotes for SQL safety
     name_safe = (name_on_order or "").replace("'", "''")
     ingredients_safe = ingredients_string.replace("'", "''")
 
@@ -41,29 +40,36 @@ if st.button("Submit Order") and ingredients_list:
     """
 
     try:
-        cnx.execute(insert_sql)   # use execute for INSERT/UPDATE/DELETE
-        st.success(f"Your Smoothie is ordered, {name_on_order} ✅")
+        cnx.execute(insert_sql)
+        st.success(f"✅ Your Smoothie is ordered, {name_on_order}!")
     except Exception as e:
         st.error(f"Failed to insert order: {e}")
 
-    # --- For-loop: fetch and show info per fruit via API ---
-    for fruit in ingredients_list:
+    # --- For each fruit, fetch nutrition info ---
+    for fruit_chosen in ingredients_list:
         try:
-            # Example endpoint; replace with your actual API
-            url = f"https://my.smoothiefroot.com/api/fruit/{fruit.lower()}"
-            r = requests.get(url, timeout=10)
-            r.raise_for_status()
+            st.subheader(f"{fruit_chosen} Nutrition Information")
 
-            st.subheader(f"🍏 Info for {fruit}")
-            # Use st.json so any JSON shape displays safely
-            st.json(r.json())
-            # If you prefer a table and the API returns a flat dict or list of dicts:
-            # st.dataframe(r.json(), use_container_width=True)
+            # Fruityvice API
+            fruityvice_response = requests.get(
+                f"https://fruityvice.com/api/fruit/{fruit_chosen.lower()}", timeout=10
+            )
+            fruityvice_response.raise_for_status()
+            fruityvice_data = fruityvice_response.json()
+
+            # Normalize JSON to table form
+            if "nutritions" in fruityvice_data:
+                # Expand nutrition into rows
+                nutrition = fruityvice_data["nutritions"]
+                rows = [{"name": fruit_chosen, **nutrition}]
+                st.dataframe(rows, use_container_width=True)
+            else:
+                st.warning(f"No nutrition data available for {fruit_chosen}")
 
         except Exception as e:
-            st.warning(f"Could not fetch info for {fruit}: {e}")
+            st.warning(f"Could not fetch info for {fruit_chosen}: {e}")
 
-# Optional: show the fruit options table for reference
+# --- Show all fruit options ---
 if fruits:
     st.write("Available fruit options:")
     st.dataframe(fruits_df, use_container_width=True)
