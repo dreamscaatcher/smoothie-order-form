@@ -72,5 +72,5 @@ if st.button("Submit Order") and ingredients_list:
 
 # --- Show all fruit options ---
 if fruits:
-    st.write("Available fruit options:")
+
     st.dataframe(fruits_df, use_container_width=True)
