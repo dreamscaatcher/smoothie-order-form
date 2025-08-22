@@ -51,7 +51,7 @@ if st.button("Submit Order") and ingredients_list:
 
         try:
             fruityvice_response = requests.get(
-                f"https://fruityvice.com/api/fruit/{fruit_api_name}", timeout=10
+                f"https://my.smoothiefroot.com/api/fruit/{fruit_api_name}", timeout=10
             )
 
             if fruityvice_response.status_code == 200:
