@@ -70,7 +70,4 @@ if st.button("Submit Order") and ingredients_list:
         except Exception as e:
             st.warning(f"Could not fetch info for {fruit_chosen}: {e}")
 
-# --- Show all fruit options ---
-if fruits:
 
-    st.dataframe(fruits_df, use_container_width=True)
